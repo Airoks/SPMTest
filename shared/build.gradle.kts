@@ -7,6 +7,15 @@ plugins {
 }
 
 kotlin {
+    multiplatformSwiftPackage {
+        packageName("SPMTest")
+        swiftToolsVersion("5.3")
+        targetPlatforms {
+            iOS { v("13") }
+        }
+        outputDirectory(File(rootDir, "/"))
+    }
+
     android()
 
     val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget = when {
