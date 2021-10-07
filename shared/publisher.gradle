@@ -1,0 +1,71 @@
+apply plugin: 'maven-publish'
+
+ext {
+    repositoryReleaseUrl = "https://nexus.42dev.ru/repository/maven/"
+
+    contributorUserName = "daniyar"
+    contributorPassword = "I5BVF1nZUVXx3ZgN"
+
+    libraryGroupId = "com.example.nexus"
+    libraryArtifact = "spmtest"
+    libraryVersion = "0.0.2"
+}
+
+// Публикуем
+publishing {
+
+    // В список репозиториев
+    repositories {
+        // Подключаем наш репозиторий
+        maven {
+            // Указываем данные для авторизации
+            credentials {
+                username contributorUserName
+                password contributorPassword
+            }
+            // И ссылку на репозиторий в зависимости от того Snapshot это версия или нет
+            url repositoryReleaseUrl
+        }
+    }
+
+    // Настраиваем задание публикации для maven-publish плагина
+    publications {
+        // AndroidLibrary - это просто имя, на основании которого
+        // сформируется задание, оно может быть любым
+        AndroidLibrary(MavenPublication) {
+
+            // Настраиваем параметры публикации артефакта
+            groupId libraryGroupId
+            artifactId libraryArtifact
+            version libraryVersion
+
+            // Указываем универсальный путь к артефакту
+            artifact "$buildDir/outputs/aar/${project.getName()}-release.aar"
+
+            pom {
+                // Добавляем все зависимости первого уровня в публикацию для того,
+                // чтобы избежать ClassNotFoundException при использовании
+                // библиотеки.
+                withXml {
+                    def dependencies = asNode().appendNode("dependencies")
+                    configurations.getByName("releaseCompileClasspath")
+                            .getResolvedConfiguration()
+                            .getFirstLevelModuleDependencies()
+                            .each {
+                                def dependency = dependencies.appendNode("dependency")
+                                dependency.appendNode("groupId", it.moduleGroup)
+                                dependency.appendNode("artifactId", it.moduleName)
+                                dependency.appendNode("version", it.moduleVersion)
+                            }
+                } // withXml
+            } // pom
+        } // AndroidLibrary
+    } // publications
+
+    // Выполняем assembleRelease перед публикацией
+    model {
+        tasks.publishAndroidLibraryPublicationToMavenRepository {
+            dependsOn project.tasks.assembleRelease
+        }
+    }
+} //publishing

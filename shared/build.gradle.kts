@@ -6,6 +6,8 @@ plugins {
     id("com.chromaticnoise.multiplatform-swiftpackage") version "2.0.3"
 }
 
+apply(from = "publisher.gradle")
+
 kotlin {
     multiplatformSwiftPackage {
         packageName("SPMTest")
@@ -18,19 +20,15 @@ kotlin {
 
     android()
 
-    val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget = when {
-        System.getenv("SDK_NAME")?.startsWith("iphoneos") == true -> ::iosArm64
-        System.getenv("NATIVE_ARCH")?.startsWith("arm") == true -> ::iosSimulatorArm64
-        else -> ::iosX64
-    }
 
-    iosTarget("ios") {
+    ios {
         binaries {
             framework {
                 baseName = "shared"
             }
         }
     }
+
     sourceSets {
         val commonMain by getting
         val commonTest by getting {
